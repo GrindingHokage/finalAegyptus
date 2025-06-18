@@ -317,11 +317,11 @@ export default function SitesPage() {
           <CardDescription>Explore ancient Egyptian sites</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="aspect-[16/9] bg-black/50 rounded-md border border-gold/20 relative overflow-hidden">
+          <div className="mobile-map-container bg-black/50 rounded-md border border-gold/20 relative overflow-hidden">
             <iframe
               src="https://archmap.cultnat.org/Map.aspx"
               title="Interactive Map of Egyptian Archaeological Sites"
-              className="absolute inset-0 w-full h-full border-0"
+              className="w-full h-full border-0"
               allowFullScreen
             />
           </div>
