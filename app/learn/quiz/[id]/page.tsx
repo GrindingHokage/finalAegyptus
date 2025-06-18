@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react"
-;("use client")
+"use client"
 
+import { useState, useEffect } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
