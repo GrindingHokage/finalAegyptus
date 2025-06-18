@@ -23,6 +23,7 @@ export default function Sidebar() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const [isHovering, setIsHovering] = useState(false)
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const isMobile = useIsMobile()
 
   // Reset hover state when switching between mobile and desktop
@@ -38,7 +39,16 @@ export default function Sidebar() {
   }
 
   const handleMouseLeave = () => {
-    if (!isMobile) {
+    if (!isMobile && !isDropdownOpen) {
+      setIsHovering(false)
+    }
+  }
+
+  // Handle dropdown state changes
+  const handleDropdownOpenChange = (open: boolean) => {
+    setIsDropdownOpen(open)
+    // If dropdown is closing and we're on desktop, allow sidebar to close
+    if (!open && !isMobile) {
       setIsHovering(false)
     }
   }
@@ -71,7 +81,7 @@ export default function Sidebar() {
             ? isOpen
               ? "translate-x-0"
               : "-translate-x-full"
-            : isHovering
+            : isHovering || isDropdownOpen
               ? "translate-x-0"
               : "-translate-x-full",
         )}
@@ -104,7 +114,7 @@ export default function Sidebar() {
             </ul>
           </nav>
           <div className="border-t border-border p-4">
-            <ThemeToggle />
+            <ThemeToggle onDropdownOpenChange={handleDropdownOpenChange} />
           </div>
         </div>
       </div>
