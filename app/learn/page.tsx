@@ -18,27 +18,30 @@ const allCourses = [
     title: "Hieroglyphs for Beginners",
     description: "Learn to read and write basic hieroglyphic symbols and understand their meanings",
     level: "Beginner",
-    lessons: 12,
-    duration: "4 hours",
+    lessons: 31,
+    duration: "7+ hours",
     image: "/placeholder.svg?height=120&width=120",
+    link: "/learn/courses/hieroglyphs-for-beginners",
   },
   {
     id: 2,
+    title: "Ancient Egypt Documentaries",
+    description: "Comprehensive documentary series exploring ancient Egyptian civilization",
+    level: "All Levels",
+    lessons: 12,
+    duration: "10+ hours",
+    image: "/placeholder.svg?height=120&width=120",
+    link: "/learn/courses/ancient-egypt-documentaries",
+  },
+  {
+    id: 3,
     title: "Egyptian Mythology",
     description: "Explore the gods and myths of ancient Egypt and their cultural significance",
     level: "Intermediate",
     lessons: 8,
     duration: "3 hours",
     image: "/placeholder.svg?height=120&width=120",
-  },
-  {
-    id: 3,
-    title: "Pharaohs & Dynasties",
-    description: "The rulers and royal families of ancient Egypt through the ages",
-    level: "Advanced",
-    lessons: 15,
-    duration: "6 hours",
-    image: "/placeholder.svg?height=120&width=120",
+    link: "#",
   },
   {
     id: 4,
@@ -48,6 +51,7 @@ const allCourses = [
     lessons: 10,
     duration: "4 hours",
     image: "/placeholder.svg?height=120&width=120",
+    link: "#",
   },
 ]
 
@@ -59,6 +63,8 @@ const getLevelColor = (level: string) => {
       return "bg-orange-500/10 text-orange-500 border-orange-500/20"
     case "advanced":
       return "bg-red-500/10 text-red-500 border-red-500/20"
+    case "all levels":
+      return "bg-blue-500/10 text-blue-500 border-blue-500/20"
     default:
       return "bg-gray-500/10 text-gray-500 border-gray-500/20"
   }
@@ -104,7 +110,7 @@ export default function LearnPage() {
             <h2 className="text-xl font-semibold mb-4">All Courses</h2>
             <div className="space-y-4">
               {allCourses.map((course) => (
-                <Link href="/learn/courses/hieroglyphs-for-beginners" key={course.id}>
+                <Link href={course.link} key={course.id}>
                   <Card className="border-gold/20 hover:border-gold/50 transition-colors cursor-pointer">
                     <CardContent className="p-4">
                       <div className="flex gap-4">
@@ -112,8 +118,10 @@ export default function LearnPage() {
                           <Image
                             src={
                               course.id === 1
-                                ? "https://lh3.googleusercontent.com/pw/AP1GczNsQKZ-FgGKKRfUczdRJ33cKw6zLPY1m1VbcproMP3XHhuP7pShBceAZW_OhRkEhGOZnlpYCPmJY2UyhDHgDeqHSYqYZuwdRR__oBsoU1G7bt6ziBwyH7CSXFjHB31fu5SlHVuB0l_YSaT8yjFPvp8=w880-h880-s-no-gm?authuser=0"
-                                : course.image || "/placeholder.svg"
+                                ? "https://lh3.googleusercontent.com/pw/AP1GczMTvOeTDk1ndlRjolGVMNsDtryEN_P23fCHHVbpqNnWnkrofI6Hlfa1sijtd8MTmfdBUFcm3AfqLxgRapQNHbNPuovAkK4tdx9Y2tEQvhiUjfrEmyBPkRqb7g0h1I7h4izwXWlNpz6CCWMDleMrDUMz=w880-h880-s-no-gm?authuser=0"
+                                : course.id === 2
+                                  ? "https://lh3.googleusercontent.com/pw/AP1GczOLizWPIN1Qs7mVZW4FX_axdqn3HPzsgXoIlQGEX665N0NdSFqm3O9Tb8l9SqJMgSEXAY_xDSMYsXH_W1IIfcR3oH3D6vyCmdAATGtZWaSiyoQOMqib8TequkshRWp6HCOZBHwUeaR8UcGyAq3PU3s=w869-h869-s-no-gm?authuser=0"
+                                  : course.image || "/placeholder.svg"
                             }
                             alt={course.title}
                             width={80}
@@ -134,7 +142,7 @@ export default function LearnPage() {
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <BookOpen className="h-4 w-4" />
-                              {course.lessons} lessons
+                              {course.lessons} {course.id === 2 ? "documentaries" : "lessons"}
                             </div>
                             <div className="flex items-center gap-1">
                               <Clock className="h-4 w-4" />
