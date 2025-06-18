@@ -7,35 +7,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Progress } from "@/components/ui/progress"
 import { Clock, BookOpen, Star, Crown, History, CheckCircle, Brain } from "lucide-react"
 import { quizData } from "@/lib/quiz-data"
 import { useQuizProgress } from "@/hooks/use-quiz-progress"
 
 // Sample data for courses
-const continueLearningCourses = [
-  {
-    id: 1,
-    title: "Hieroglyphs for Beginners",
-    level: "Beginner",
-    duration: "4 hours",
-    progress: 25,
-    completedLessons: 3,
-    totalLessons: 12,
-    image: "/placeholder.svg?height=120&width=120",
-  },
-  {
-    id: 2,
-    title: "Pharaohs & Dynasties",
-    level: "Advanced",
-    duration: "6 hours",
-    progress: 60,
-    completedLessons: 9,
-    totalLessons: 15,
-    image: "/placeholder.svg?height=120&width=120",
-  },
-]
-
 const allCourses = [
   {
     id: 1,
@@ -123,94 +99,53 @@ export default function LearnPage() {
         </TabsList>
 
         <TabsContent value="courses" className="space-y-8">
-          {/* Continue Learning Section */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Continue Learning</h2>
-            <div className="space-y-4">
-              {continueLearningCourses.map((course) => (
-                <Card key={course.id} className="border-gold/20 hover:border-gold/50 transition-colors">
-                  <CardContent className="p-4">
-                    <div className="flex gap-4">
-                      <div className="w-20 h-20 rounded-md overflow-hidden flex-shrink-0 bg-muted">
-                        <Image
-                          src={course.image || "/placeholder.svg"}
-                          alt={course.title}
-                          width={80}
-                          height={80}
-                          className="object-cover w-full h-full"
-                        />
-                      </div>
-                      <div className="flex-1 space-y-2">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-medium">{course.title}</h3>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Clock className="h-4 w-4" />
-                              {course.duration}
-                            </div>
-                          </div>
-                          <Badge variant="outline" className={getLevelColor(course.level)}>
-                            {course.level}
-                          </Badge>
-                        </div>
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-sm">
-                            <span>{course.progress}% complete</span>
-                            <span>
-                              {course.completedLessons}/{course.totalLessons} lessons
-                            </span>
-                          </div>
-                          <Progress value={course.progress} className="h-2" />
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-
           {/* All Courses Section */}
           <div>
             <h2 className="text-xl font-semibold mb-4">All Courses</h2>
             <div className="space-y-4">
               {allCourses.map((course) => (
-                <Card key={course.id} className="border-gold/20 hover:border-gold/50 transition-colors">
-                  <CardContent className="p-4">
-                    <div className="flex gap-4">
-                      <div className="w-20 h-20 rounded-md overflow-hidden flex-shrink-0 bg-muted">
-                        <Image
-                          src={course.image || "/placeholder.svg"}
-                          alt={course.title}
-                          width={80}
-                          height={80}
-                          className="object-cover w-full h-full"
-                        />
-                      </div>
-                      <div className="flex-1 space-y-2">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-medium">{course.title}</h3>
-                            <p className="text-sm text-muted-foreground line-clamp-2">{course.description}</p>
-                          </div>
-                          <Badge variant="outline" className={getLevelColor(course.level)}>
-                            {course.level}
-                          </Badge>
+                <Link href="/learn/courses/hieroglyphs-for-beginners" key={course.id}>
+                  <Card className="border-gold/20 hover:border-gold/50 transition-colors cursor-pointer">
+                    <CardContent className="p-4">
+                      <div className="flex gap-4">
+                        <div className="w-20 h-20 rounded-md overflow-hidden flex-shrink-0 bg-muted">
+                          <Image
+                            src={
+                              course.id === 1
+                                ? "https://lh3.googleusercontent.com/pw/AP1GczNsQKZ-FgGKKRfUczdRJ33cKw6zLPY1m1VbcproMP3XHhuP7pShBceAZW_OhRkEhGOZnlpYCPmJY2UyhDHgDeqHSYqYZuwdRR__oBsoU1G7bt6ziBwyH7CSXFjHB31fu5SlHVuB0l_YSaT8yjFPvp8=w880-h880-s-no-gm?authuser=0"
+                                : course.image || "/placeholder.svg"
+                            }
+                            alt={course.title}
+                            width={80}
+                            height={80}
+                            className="object-cover w-full h-full"
+                          />
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <BookOpen className="h-4 w-4" />
-                            {course.lessons} lessons
+                        <div className="flex-1 space-y-2">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h3 className="font-medium">{course.title}</h3>
+                              <p className="text-sm text-muted-foreground line-clamp-2">{course.description}</p>
+                            </div>
+                            <Badge variant="outline" className={getLevelColor(course.level)}>
+                              {course.level}
+                            </Badge>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            {course.duration}
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <BookOpen className="h-4 w-4" />
+                              {course.lessons} lessons
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              {course.duration}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           </div>
