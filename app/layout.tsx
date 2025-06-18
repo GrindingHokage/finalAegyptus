@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from "@/context/auth-context"
 import { CartProvider } from "@/components/cart/cart-context"
 import AuthGuard from "@/components/auth-guard"
+import Sidebar from "@/components/sidebar"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -122,7 +123,10 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthProvider>
             <CartProvider>
-              <AuthGuard>{children}</AuthGuard>
+              <AuthGuard>
+                <Sidebar />
+                {children}
+              </AuthGuard>
               <Toaster />
             </CartProvider>
           </AuthProvider>
