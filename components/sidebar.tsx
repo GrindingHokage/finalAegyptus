@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Languages, ShoppingBag, Glasses, Map, BookOpen, User, Menu, X } from "lucide-react"
+import { Home, Languages, ShoppingBag, Glasses, Map, BookOpen, User, AlignJustify, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -22,71 +22,47 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
-  const [isHovering, setIsHovering] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const isMobile = useIsMobile()
-
-  // Reset hover state when switching between mobile and desktop
-  useEffect(() => {
-    setIsHovering(false)
-  }, [isMobile])
-
-  // Handle hover area for desktop
-  const handleMouseEnter = () => {
-    if (!isMobile) {
-      setIsHovering(true)
-    }
-  }
-
-  const handleMouseLeave = () => {
-    if (!isMobile && !isDropdownOpen) {
-      setIsHovering(false)
-    }
-  }
 
   // Handle dropdown state changes
   const handleDropdownOpenChange = (open: boolean) => {
     setIsDropdownOpen(open)
-    // If dropdown is closing and we're on desktop, allow sidebar to close
-    if (!open && !isMobile) {
-      setIsHovering(false)
+  }
+
+  // Close sidebar when clicking outside (but not on navigation items)
+  const handleBackdropClick = () => {
+    if (!isDropdownOpen) {
+      setIsOpen(false)
     }
+  }
+
+  // Handle navigation item click
+  const handleNavClick = () => {
+    setIsOpen(false)
   }
 
   return (
     <>
-      {/* Mobile menu button */}
+      {/* Menu button - Always visible */}
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-4 left-4 z-50 md:hidden"
+        className="fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-sm border border-border/50 hover:bg-accent"
         onClick={() => setIsOpen(!isOpen)}
       >
-        {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        {isOpen ? <X className="h-6 w-6" /> : <AlignJustify className="h-6 w-6" />}
       </Button>
 
-      {/* Hover trigger area for desktop */}
-      <div className="fixed left-0 top-0 h-full w-4 z-30 hidden md:block" onMouseEnter={handleMouseEnter} />
+      {/* Backdrop overlay */}
+      {isOpen && <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-30" onClick={handleBackdropClick} />}
 
-      {/* Backdrop overlay for mobile */}
-      {isOpen && isMobile && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-30" onClick={() => setIsOpen(false)} />
-      )}
-
-      {/* Sidebar for desktop and mobile */}
+      {/* Sidebar */}
       <div
         className={cn(
           "fixed inset-y-0 left-0 z-40 w-64 transform bg-background border-r border-border transition-transform duration-300 ease-in-out",
-          isMobile
-            ? isOpen
-              ? "translate-x-0"
-              : "-translate-x-full"
-            : isHovering || isDropdownOpen
-              ? "translate-x-0"
-              : "-translate-x-full",
+          isOpen ? "translate-x-0" : "-translate-x-full",
         )}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
       >
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-center h-16 border-b border-border">
@@ -104,7 +80,7 @@ export default function Sidebar() {
                         ? "bg-gold/10 text-gold border border-gold/20"
                         : "text-muted-foreground hover:text-foreground hover:bg-accent",
                     )}
-                    onClick={() => isMobile && setIsOpen(false)}
+                    onClick={handleNavClick}
                   >
                     <item.icon className="h-5 w-5" />
                     {item.name}
