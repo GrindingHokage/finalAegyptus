@@ -25,9 +25,14 @@ import {
   Sparkles,
   BrainCircuit,
   Brain,
+  Mic,
+  MicOff,
+  AlertCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { GoogleGenerativeAI } from "@google/generative-ai"
+import { useEnhancedSpeech } from "@/hooks/use-enhanced-speech"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 type Language = "hieroglyph" | "english" | "arabic"
 type ReadingDirection = "ltr" | "rtl" | "ttb"
@@ -54,29 +59,8 @@ const readingDirections = [
   { value: "ttb", label: "Top to Bottom" },
 ]
 
-const sampleHistory: TranslationHistory[] = [
-  {
-    id: "1",
-    from: "hieroglyph",
-    to: "english",
-    originalText: "𓊪𓏏𓇯𓀭",
-    translatedText: "The pharaoh commands the building of a temple",
-    timestamp: "2 hours ago",
-    hieroglyphSymbols: "𓊪𓏏𓇯𓀭",
-  },
-  {
-    id: "2",
-    from: "hieroglyph",
-    to: "english",
-    originalText: "𓊨𓏏𓉐",
-    translatedText: "Offerings to the gods bring prosperity",
-    timestamp: "Yesterday",
-    hieroglyphSymbols: "𓊨𓏏𓉐",
-  },
-]
-
 export default function TranslatePage() {
-  const genAI = new GoogleGenerativeAI("AIzaSyB18bMYqelXowt9S6lAPYRyX1qoVA6iNpc")
+  const genAI = new GoogleGenerativeAI("AIzaSyCXBLLr9AdkUotagl6SAHMfGZtAdUAwRp8")
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
   const [fromLanguage, setFromLanguage] = useState<Language>("hieroglyph")
@@ -85,10 +69,31 @@ export default function TranslatePage() {
   const [outputText, setOutputText] = useState("")
   const [history, setHistory] = useState<TranslationHistory[]>([])
   const [isTranslating, setIsTranslating] = useState(false)
-  const [isRecording, setIsRecording] = useState(false)
-  const [recordingTime, setRecordingTime] = useState(0)
-  const [recognition, setRecognition] = useState<any>(null)
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const [voiceOptions, setVoiceOptions] = useState({
+    voice: "female" as "male" | "female",
+    speed: 1.0,
+  })
+
+  // Enhanced Speech functionality
+  const speechConfig = {
+    language:
+      fromLanguage === "arabic" ? ("ar" as const) : fromLanguage === "english" ? ("en" as const) : ("auto" as const),
+  }
+
+  const {
+    isRecording,
+    isTranscribing,
+    isSpeaking,
+    recordingTime,
+    error: speechError,
+    transcriptionResult,
+    toggleRecording,
+    speak,
+    formatTime,
+    clearError,
+    voiceOptions: hookVoiceOptions,
+    setVoiceOptions: setHookVoiceOptions,
+  } = useEnhancedSpeech(speechConfig)
 
   // Image Translation states
   const imageInputRef = useRef<HTMLInputElement>(null)
@@ -96,63 +101,6 @@ export default function TranslatePage() {
   const [imageTranslationResult, setImageTranslationResult] = useState<string | null>(null)
   const [selectedReadingDirection, setSelectedReadingDirection] = useState<ReadingDirection>("ltr")
   const [isImageTranslating, setIsImageTranslating] = useState(false)
-
-  // Initialize speech recognition
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-
-      if (SpeechRecognition) {
-        const recognitionInstance = new SpeechRecognition()
-
-        recognitionInstance.continuous = true
-        recognitionInstance.interimResults = true
-
-        recognitionInstance.onresult = (event: any) => {
-          let transcript = ""
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            if (event.results[i].isFinal) {
-              transcript += event.results[i][0].transcript + " "
-            }
-          }
-
-          if (transcript) {
-            setInputText((prev) => prev + transcript)
-          }
-        }
-
-        recognitionInstance.onend = () => {
-          setIsRecording(false)
-          setRecordingTime(0)
-          if (timerRef.current) {
-            clearInterval(timerRef.current)
-            timerRef.current = null
-          }
-        }
-
-        recognitionInstance.onerror = (event: any) => {
-          console.error("Speech recognition error:", event.error)
-          setIsRecording(false)
-          setRecordingTime(0)
-          if (timerRef.current) {
-            clearInterval(timerRef.current)
-            timerRef.current = null
-          }
-        }
-
-        setRecognition(recognitionInstance)
-      }
-    }
-
-    return () => {
-      if (recognition) {
-        recognition.stop()
-      }
-      if (timerRef.current) {
-        clearInterval(timerRef.current)
-      }
-    }
-  }, [])
 
   const handleSwapLanguages = () => {
     const temp = fromLanguage
@@ -164,7 +112,6 @@ export default function TranslatePage() {
 
   const handleFromLanguageChange = (value: Language) => {
     if (value === toLanguage) {
-      // If trying to select the same language, swap them
       setToLanguage(fromLanguage)
     }
     setFromLanguage(value)
@@ -174,7 +121,6 @@ export default function TranslatePage() {
 
   const handleToLanguageChange = (value: Language) => {
     if (value === fromLanguage) {
-      // If trying to select the same language, swap them
       setFromLanguage(toLanguage)
     }
     setToLanguage(value)
@@ -187,7 +133,6 @@ export default function TranslatePage() {
     setIsTranslating(true)
 
     try {
-      // Construct the prompt based on language direction
       let prompt = ""
 
       if (fromLanguage === "hieroglyph" && toLanguage === "english") {
@@ -206,14 +151,12 @@ export default function TranslatePage() {
         prompt = `Translate "${inputText}" from ${fromLanguage} to ${toLanguage}. Provide only the translation without explanations.`
       }
 
-      // Call Gemini API with updated model
       const result = await model.generateContent(prompt)
       const response = result.response
       const translatedText = response.text()
 
       setOutputText(translatedText)
 
-      // Add to history
       const newTranslation: TranslationHistory = {
         id: Date.now().toString(),
         from: fromLanguage,
@@ -227,7 +170,6 @@ export default function TranslatePage() {
 
       setHistory((prev) => [newTranslation, ...prev])
 
-      // Save to localStorage for profile page
       const existingTranslations = JSON.parse(localStorage.getItem("aegyptus_translations") || "[]")
       const profileTranslation = {
         id: newTranslation.id,
@@ -259,46 +201,29 @@ export default function TranslatePage() {
     }
   }
 
-  const handleVoiceInput = () => {
+  // Enhanced voice input handler
+  const handleVoiceInput = async () => {
     if (fromLanguage === "hieroglyph") {
-      // Voice input not available for hieroglyphs
       return
     }
 
-    if (!recognition) {
-      alert("Speech recognition is not supported in your browser. Please try using Chrome or Edge.")
-      return
-    }
+    clearError()
 
     if (isRecording) {
-      // Stop recording
-      recognition.stop()
-      setIsRecording(false)
-      setRecordingTime(0)
-      if (timerRef.current) {
-        clearInterval(timerRef.current)
-        timerRef.current = null
-      }
+      // Stop recording and get transcription
+      toggleRecording()
     } else {
       // Start recording
-      try {
-        // Set language based on fromLanguage
-        recognition.lang = fromLanguage === "arabic" ? "ar-SA" : "en-US"
-
-        // Start recognition
-        recognition.start()
-        setIsRecording(true)
-
-        // Start timer
-        timerRef.current = setInterval(() => {
-          setRecordingTime((prev) => prev + 1)
-        }, 1000)
-      } catch (error) {
-        console.error("Error starting speech recognition:", error)
-        alert("Failed to start speech recognition. Please try again.")
-      }
+      toggleRecording()
     }
   }
+
+  // Handle transcription result
+  useEffect(() => {
+    if (transcriptionResult && transcriptionResult.text) {
+      setInputText((prev) => prev + (prev ? " " : "") + transcriptionResult.text)
+    }
+  }, [transcriptionResult])
 
   const handleImageUploadClick = () => {
     imageInputRef.current?.click()
@@ -310,7 +235,7 @@ export default function TranslatePage() {
       const reader = new FileReader()
       reader.onloadend = () => {
         setUploadedImage(reader.result as string)
-        setImageTranslationResult(null) // Clear previous result
+        setImageTranslationResult(null)
       }
       reader.readAsDataURL(file)
     }
@@ -323,15 +248,9 @@ export default function TranslatePage() {
     setImageTranslationResult(null)
 
     try {
-      // Simulate OCR and then translation
-      // In a real app, you'd send the image to a backend for OCR and then translation
-      const mockOcrText = "𓊪𓏏𓇯𓀭𓊨𓏏𓉐" // Simulated hieroglyphics from image
+      const mockOcrText = "𓊪𓏏𓇯𓀭𓊨𓏏𓉐"
 
       const prompt = `Translate the following Hieroglyphic symbols into English. The reading direction is ${selectedReadingDirection}. Provide only the translation without explanations: ${mockOcrText}`
-
-      // If you want to translate to Arabic, adjust the prompt
-      // For this demo, we'll assume translation to English for image scan
-      // In a real scenario, you'd have a target language selector for image translation too.
 
       const result = await model.generateContent(prompt)
       const response = result.response
@@ -352,7 +271,7 @@ export default function TranslatePage() {
     setSelectedReadingDirection("ltr")
     setIsImageTranslating(false)
     if (imageInputRef.current) {
-      imageInputRef.current.value = "" // Clear the file input
+      imageInputRef.current.value = ""
     }
   }
 
@@ -365,12 +284,10 @@ export default function TranslatePage() {
 
   const handlePronounceTranslation = useCallback(() => {
     if (outputText && toLanguage !== "hieroglyph") {
-      // Use Web Speech API for pronunciation
-      const utterance = new SpeechSynthesisUtterance(outputText)
-      utterance.lang = toLanguage === "arabic" ? "ar" : "en"
-      speechSynthesis.speak(utterance)
+      const language = toLanguage === "arabic" ? "ar" : "en"
+      speak(outputText, language)
     }
-  }, [outputText, toLanguage])
+  }, [outputText, toLanguage, speak])
 
   const handleDeleteHistory = (id: string) => {
     setHistory((prev) => prev.filter((item) => item.id !== id))
@@ -380,15 +297,16 @@ export default function TranslatePage() {
     return languages.filter((lang) => (isTarget ? lang.value !== fromLanguage : lang.value !== toLanguage))
   }
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs < 10 ? "0" : ""}${secs}`
-  }
-
   return (
     <div className="container py-8 px-4 max-w-6xl">
       <h1 className="font-cinzel text-3xl font-bold mb-8 text-gold">Translate</h1>
+
+      {speechError && (
+        <Alert className="mb-6 border-red-200 bg-red-50">
+          <AlertCircle className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-red-800">{speechError}</AlertDescription>
+        </Alert>
+      )}
 
       <Tabs defaultValue="text" className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-8">
@@ -458,39 +376,19 @@ export default function TranslatePage() {
                     className={cn(
                       "border-gold/20 hover:border-gold/50 relative",
                       fromLanguage === "hieroglyph" && "opacity-50 cursor-not-allowed",
-                      isRecording && "border-red-500 bg-red-500/10",
+                      isRecording && "border-red-500 bg-red-500/10 animate-pulse",
+                      isTranscribing && "border-blue-500 bg-blue-500/10",
                     )}
                   >
-                    <div className="relative w-5 h-5 flex items-center justify-center">
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        className={cn("transition-opacity", isRecording ? "opacity-70" : "opacity-100")}
-                      >
-                        <path
-                          d="M12 2C10.34 2 9 3.34 9 5V11C9 12.66 10.34 14 12 14C13.66 14 15 12.66 15 11V5C15 3.34 13.66 2 12 2Z"
-                          fill="currentColor"
-                        />
-                        <path
-                          d="M19 10V11C19 15.42 15.42 19 11 19H13C17.42 19 21 15.42 21 11V10H19Z"
-                          fill="currentColor"
-                        />
-                        <path d="M7 10V11C7 15.42 10.58 19 15 19H13C8.58 19 5 15.42 5 11V10H7Z" fill="currentColor" />
-                        <path d="M12 19V22H12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                        <path d="M8 22H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                      </svg>
-                      {isRecording && (
-                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                      )}
-                    </div>
-                    {isRecording && (
-                      <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs bg-background border border-gold/20 px-2 py-1 rounded-md whitespace-nowrap">
-                        {formatTime(recordingTime)}
-                      </span>
+                    {isTranscribing ? (
+                      <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
+                    ) : isRecording ? (
+                      <MicOff className="h-4 w-4 text-red-600" />
+                    ) : (
+                      <Mic className="h-4 w-4" />
                     )}
+
+                    {/* Status indicator */}
                   </Button>
 
                   <Button
@@ -525,11 +423,23 @@ export default function TranslatePage() {
                       onClick={handlePronounceTranslation}
                       disabled={toLanguage === "hieroglyph"}
                       className={cn(
-                        "border-gold/20 hover:border-gold/50",
+                        "border-gold/20 hover:border-gold/50 relative",
                         toLanguage === "hieroglyph" && "opacity-50 cursor-not-allowed",
+                        isSpeaking && "border-green-500 bg-green-500/10 animate-pulse",
                       )}
                     >
-                      <Volume2 className="h-4 w-4" />
+                      {isSpeaking ? (
+                        <RefreshCw className="h-4 w-4 animate-spin text-green-600" />
+                      ) : (
+                        <Volume2 className="h-4 w-4" />
+                      )}
+
+                      {/* Speaking indicator */}
+                      {isSpeaking && (
+                        <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs bg-background border border-gold/20 px-2 py-1 rounded-md whitespace-nowrap">
+                          🔊 Speaking...
+                        </span>
+                      )}
                     </Button>
 
                     <Button
@@ -635,27 +545,27 @@ export default function TranslatePage() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label htmlFor="reading-direction" className="text-sm font-medium">
+                <div className="space-y-3">
+                  <label htmlFor="reading-direction" className="text-sm font-medium block">
                     Reading Direction
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {readingDirections.map((dir) => (
                       <Button
                         key={dir.value}
                         variant={selectedReadingDirection === dir.value ? "default" : "outline"}
                         className={cn(
-                          "w-full",
+                          "w-full h-12 text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2",
                           selectedReadingDirection === dir.value
-                            ? "bg-gold text-black hover:bg-gold/90"
-                            : "border-gold/20 hover:border-gold/50",
+                            ? "bg-gold text-black hover:bg-gold/90 border-gold shadow-md"
+                            : "border-gold/30 hover:border-gold/60 hover:bg-gold/5 text-foreground",
                         )}
                         onClick={() => setSelectedReadingDirection(dir.value)}
                       >
-                        {dir.value === "ltr" && <ArrowRight className="h-4 w-4 mr-2" />}
-                        {dir.value === "rtl" && <ArrowLeft className="h-4 w-4 mr-2" />}
-                        {dir.value === "ttb" && <ArrowDown className="h-4 w-4 mr-2" />}
-                        {dir.label}
+                        {dir.value === "ltr" && <ArrowRight className="h-4 w-4 flex-shrink-0" />}
+                        {dir.value === "rtl" && <ArrowLeft className="h-4 w-4 flex-shrink-0" />}
+                        {dir.value === "ttb" && <ArrowDown className="h-4 w-4 flex-shrink-0" />}
+                        <span className="truncate">{dir.label}</span>
                       </Button>
                     ))}
                   </div>
@@ -719,14 +629,11 @@ export default function TranslatePage() {
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
-                    {/* Add pronunciation for image translation if needed */}
                   </div>
                 )}
 
-                {/* Horizontal Rule */}
                 <hr className="my-4 border-gold/10" />
 
-                {/* Detection Details Section */}
                 <div>
                   <h4 className="font-medium mb-2 flex items-center gap-2">
                     <BrainCircuit className="h-4 w-4 text-gold" />
@@ -735,7 +642,7 @@ export default function TranslatePage() {
                   <div className="p-3 border border-gold/20 rounded-md bg-muted/50 text-sm space-y-1">
                     <div className="flex items-center gap-2">
                       <Brain className="h-4 w-4 text-muted-foreground" />
-                      <span>Model: Faster R-CNN</span>
+                      <span>Model: OpenAI Whisper + Coqui TTS</span>
                     </div>
                     <div className="flex items-center gap-2">
                       {selectedReadingDirection === "ltr" && <ArrowRight className="h-4 w-4 text-muted-foreground" />}
