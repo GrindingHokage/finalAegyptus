@@ -25,6 +25,7 @@ import {
   Sparkles,
   BrainCircuit,
   Brain,
+  CirclePause,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { GoogleGenerativeAI } from "@google/generative-ai"
@@ -89,6 +90,7 @@ export default function TranslatePage() {
   const [recordingTime, setRecordingTime] = useState(0)
   const [recognition, setRecognition] = useState<any>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const [isSpeaking, setIsSpeaking] = useState(false)
 
   // Image Translation states
   const imageInputRef = useRef<HTMLInputElement>(null)
@@ -356,22 +358,6 @@ export default function TranslatePage() {
     }
   }
 
-  const handleCopyTranslation = useCallback(() => {
-    if (outputText) {
-      navigator.clipboard.writeText(outputText)
-      console.log("Translation copied to clipboard")
-    }
-  }, [outputText])
-
-  const handlePronounceTranslation = useCallback(() => {
-    if (outputText && toLanguage !== "hieroglyph") {
-      // Use Web Speech API for pronunciation
-      const utterance = new SpeechSynthesisUtterance(outputText)
-      utterance.lang = toLanguage === "arabic" ? "ar" : "en"
-      speechSynthesis.speak(utterance)
-    }
-  }, [outputText, toLanguage])
-
   const handleDeleteHistory = (id: string) => {
     setHistory((prev) => prev.filter((item) => item.id !== id))
   }
@@ -385,6 +371,35 @@ export default function TranslatePage() {
     const secs = seconds % 60
     return `${mins}:${secs < 10 ? "0" : ""}${secs}`
   }
+
+  const handlePronounceTranslation = useCallback(() => {
+    if (outputText && toLanguage !== "hieroglyph") {
+      if (isSpeaking) {
+        // Stop/pause current speech
+        speechSynthesis.cancel()
+        setIsSpeaking(false)
+        return
+      }
+
+      setIsSpeaking(true)
+
+      // Use Web Speech API for pronunciation
+      const utterance = new SpeechSynthesisUtterance(outputText)
+      utterance.lang = toLanguage === "arabic" ? "ar" : "en"
+
+      utterance.onend = () => setIsSpeaking(false)
+      utterance.onerror = () => setIsSpeaking(false)
+
+      speechSynthesis.speak(utterance)
+    }
+  }, [outputText, toLanguage, isSpeaking])
+
+  const handleCopyTranslation = useCallback(() => {
+    if (outputText) {
+      navigator.clipboard.writeText(outputText)
+      console.log("Translation copied to clipboard")
+    }
+  }, [outputText])
 
   return (
     <div className="container py-8 px-4 max-w-6xl">
@@ -519,18 +534,21 @@ export default function TranslatePage() {
                 {/* Output Controls */}
                 {outputText && (
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handlePronounceTranslation}
-                      disabled={toLanguage === "hieroglyph"}
-                      className={cn(
-                        "border-gold/20 hover:border-gold/50",
-                        toLanguage === "hieroglyph" && "opacity-50 cursor-not-allowed",
-                      )}
-                    >
-                      <Volume2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex flex-col items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handlePronounceTranslation}
+                        disabled={toLanguage === "hieroglyph"}
+                        className={cn(
+                          "border-gold/20 hover:border-gold/50",
+                          toLanguage === "hieroglyph" && "opacity-50 cursor-not-allowed",
+                        )}
+                      >
+                        {isSpeaking ? <CirclePause className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                      </Button>
+                      {isSpeaking && <span className="text-xs text-muted-foreground">Speaking...</span>}
+                    </div>
 
                     <Button
                       variant="outline"

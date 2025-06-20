@@ -268,7 +268,7 @@ const courseInfo = {
   totalLessons: 31,
   totalDuration: "7:15:45",
   thumbnail:
-    "https://lh3.googleusercontent.com/pw/AP1GczNsQKZ-FgGKKRfUczdRJ33cKw6zLPY1m1VbcproMP3XHhuP7pShBceAZW_OhRkEhGOZnlpYCPmJY2UyhDHgDeqHSYqYZuwdRR__oBsoU1G7bt6ziBwyH7CSXFjHB31fu5SlHVuB0l_YSaT8yjFPvp8=w880-h880-s-no-gm?authuser=0",
+    "https://lh3.googleusercontent.com/pw/AP1GczMTvOeTDk1ndlRjolGVMNsDtryEN_P23fCHHVbpqNnWnkrofI6Hlfa1sijtd8MTmfdBUFcm3AfqLxgRapQNHbNPuovAkK4tdx9Y2tEQvhiUjfrEmyBPkRqb7g0h1I7h4izwXWlNpz6CCWMDleMrDUMz=w880-h880-s-no-gm?authuser=0",
 }
 
 export default function HieroglyphsCoursePage() {
@@ -307,8 +307,8 @@ export default function HieroglyphsCoursePage() {
             <Image
               src={courseInfo.thumbnail || "/placeholder.svg"}
               alt={courseInfo.title}
-              width={320}
-              height={192}
+              width={80}
+              height={80}
               className="object-cover w-full h-full"
             />
           </div>

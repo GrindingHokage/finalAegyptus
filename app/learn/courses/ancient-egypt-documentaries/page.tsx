@@ -115,8 +115,7 @@ const courseInfo = {
   difficulty: "All Levels",
   totalLessons: 12,
   totalDuration: "9:58:30",
-  thumbnail:
-    "https://lh3.googleusercontent.com/pw/AP1GczNsQKZ-FgGKKRfUczdRJ33cKw6zLPY1m1VbcproMP3XHhuP7pShBceAZW_OhRkEhGOZnlpYCPmJY2UyhDHgDeqHSYqYZuwdRR__oBsoU1G7bt6ziBwyH7CSXFjHB31fu5SlHVuB0l_YSaT8yjFPvp8=w880-h880-s-no-gm?authuser=0",
+  thumbnail: "/images/secrets-of-ancient-egypt.jpg", // Updated to the new image
 }
 
 export default function AncientEgyptDocumentariesPage() {
@@ -155,8 +154,8 @@ export default function AncientEgyptDocumentariesPage() {
             <Image
               src={courseInfo.thumbnail || "/placeholder.svg"}
               alt={courseInfo.title}
-              width={320}
-              height={192}
+              width={80}
+              height={80}
               className="object-cover w-full h-full"
             />
           </div>
@@ -244,8 +243,6 @@ export default function AncientEgyptDocumentariesPage() {
           )
         })}
       </div>
-
-      {/* Bottom Navigation */}
       <div className="mt-8 pt-6 border-t border-gold/20">
         <Link href="/learn">
           <Button variant="outline" className="border-gold/20 hover:border-gold/50">
